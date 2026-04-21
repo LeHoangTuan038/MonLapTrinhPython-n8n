@@ -1,0 +1,207 @@
+{
+  "name": "My workflow 2",
+  "nodes": [
+    {
+      "parameters": {
+        "updates": [
+          "message"
+        ],
+        "additionalFields": {
+          "download": false
+        }
+      },
+      "type": "n8n-nodes-base.telegramTrigger",
+      "typeVersion": 1.2,
+      "position": [
+        0,
+        0
+      ],
+      "id": "b8d75ff7-b541-4a41-92a0-08ec53bef9a4",
+      "name": "Telegram Trigger",
+      "webhookId": "daa7b3df-cf46-4b85-8e58-c1d0db5aedbc",
+      "credentials": {
+        "telegramApi": {
+          "id": "HVwNbYrbXHsG8taw",
+          "name": "Telegram account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "resource": "file",
+        "fileId": "={{ $json.message.photo.last().file_id }}",
+        "additionalFields": {}
+      },
+      "type": "n8n-nodes-base.telegram",
+      "typeVersion": 1.2,
+      "position": [
+        208,
+        0
+      ],
+      "id": "34ca48ea-10bd-408a-b686-0c7163acb473",
+      "name": "Get a file",
+      "webhookId": "1f949400-d09f-48f0-8d39-ed0874db530f",
+      "credentials": {
+        "telegramApi": {
+          "id": "HVwNbYrbXHsG8taw",
+          "name": "Telegram account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "inputDataFieldName": "={{ $node[\"Get a file\"].binary.data }}",
+        "name": "={{ $node[\"Analyze an image\"].json.content.parts[0].text.substring(0, 1000) }}.jpg",
+        "driveId": {
+          "__rl": true,
+          "mode": "list",
+          "value": "My Drive"
+        },
+        "folderId": {
+          "__rl": true,
+          "value": "root",
+          "mode": "list",
+          "cachedResultName": "/ (Root folder)",
+          "cachedResultUrl": "https://drive.google.com/drive"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleDrive",
+      "typeVersion": 3,
+      "position": [
+        832,
+        0
+      ],
+      "id": "f5854024-7e0b-440c-bc1a-0394830ad77a",
+      "name": "Upload file",
+      "credentials": {
+        "googleDriveOAuth2Api": {
+          "id": "0krmywiAR8e9oAAN",
+          "name": "Google Drive OAuth2 API"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "sendAndWait",
+        "chatId": "={{ $node[\"Telegram Trigger\"].json.message.chat.id }}",
+        "message": "=✅ Đã phân tích ảnh thành công! Tên file trên Drive của bạn là: {{ $node[\"Analyze an image\"].json.content.parts[0].text.substring(0, 1000) }}...jpg",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.telegram",
+      "typeVersion": 1.2,
+      "position": [
+        1040,
+        0
+      ],
+      "id": "156c2ed6-1b82-44a9-b3fb-d7b0002026cd",
+      "name": "Send message and wait for response",
+      "webhookId": "1fd16e76-b024-4c4d-991d-b36cbd67abe2",
+      "credentials": {
+        "telegramApi": {
+          "id": "HVwNbYrbXHsG8taw",
+          "name": "Telegram account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "resource": "image",
+        "operation": "analyze",
+        "modelId": {
+          "__rl": true,
+          "value": "models/gemini-2.5-flash",
+          "mode": "list",
+          "cachedResultName": "models/gemini-2.5-flash"
+        },
+        "text": "Hãy mô tả ngắn gọn nội dung tấm hình này bằng từ tiếng Việt. Không dùng ký tự đặc biệt.",
+        "inputType": "binary",
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.googleGemini",
+      "typeVersion": 1.1,
+      "position": [
+        416,
+        0
+      ],
+      "id": "110b9b72-0327-4b40-a268-703dbed9f8dc",
+      "name": "Analyze an image",
+      "credentials": {
+        "googlePalmApi": {
+          "id": "dJAbbYShLY6xUNCy",
+          "name": "Google Gemini(PaLM) Api account"
+        }
+      }
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Telegram Trigger": {
+      "main": [
+        [
+          {
+            "node": "Get a file",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get a file": {
+      "main": [
+        [
+          {
+            "node": "Analyze an image",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Upload file": {
+      "main": [
+        [
+          {
+            "node": "Send message and wait for response",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Send message and wait for response": {
+      "main": [
+        [
+          {
+            "node": "Upload file",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Analyze an image": {
+      "main": [
+        [
+          {
+            "node": "Upload file",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1",
+    "binaryMode": "separate"
+  },
+  "versionId": "c935ee20-64f9-4f40-a254-80c52baf7dda",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "b287d09546796be522a2c2de71046cc211f00ba422015262b28088856a3e936f"
+  },
+  "id": "CkdQSZ8WXyi742zS",
+  "tags": []
+}
